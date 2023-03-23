@@ -14,6 +14,16 @@ class _HomescreenState extends State<Homescreen> {
   Homeprovider? homeproviderTrue;
   Homeprovider? homeproviderFalse;
   TextEditingController txtSearch = TextEditingController();
+  PullToRefreshController? pullToRefreshController;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    pullToRefreshController = PullToRefreshController(
+      onRefresh: () => homeproviderTrue!.inAppWebViewController!.reload(),
+    );
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,18 +40,30 @@ class _HomescreenState extends State<Homescreen> {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    SizedBox(width: 10,),
-                   InkWell(onTap: () {
-                     homeproviderTrue!.inAppWebViewController!.goBack();
-                   },child: Icon(Icons.arrow_back)),
-                   SizedBox(width: 10,),
-                   InkWell(onTap: () {
-                     homeproviderTrue!.inAppWebViewController!.reload();
-                   },child: Icon(Icons.refresh)),
-                    SizedBox(width: 10,),
-                   InkWell(onTap: () {
-                     homeproviderTrue!.inAppWebViewController!.goForward();
-                   },child: Icon(Icons.arrow_forward_outlined)),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    InkWell(
+                        onTap: () {
+                          homeproviderTrue!.inAppWebViewController!.goBack();
+                        },
+                        child: Icon(Icons.arrow_back)),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    InkWell(
+                        onTap: () {
+                          homeproviderTrue!.inAppWebViewController!.reload();
+                        },
+                        child: Icon(Icons.refresh)),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    InkWell(
+                        onTap: () {
+                          homeproviderTrue!.inAppWebViewController!.goForward();
+                        },
+                        child: Icon(Icons.arrow_forward_outlined)),
                   ],
                 ),
                 Expanded(
@@ -83,19 +105,36 @@ class _HomescreenState extends State<Homescreen> {
             LinearProgressIndicator(value: homeproviderTrue!.webProgresser),
             Expanded(
               child: InAppWebView(
+                pullToRefreshController: pullToRefreshController!,
                 initialUrlRequest:
                     URLRequest(url: Uri.parse("https://www.google.com/")),
-                onWebViewCreated: (controller) =>
-                    homeproviderTrue!.inAppWebViewController = controller,
-                onLoadError: (controller, url, code, message) =>
-                homeproviderTrue!.inAppWebViewController = controller,
-                onLoadStart: (controller, url) =>
-                homeproviderTrue!.inAppWebViewController = controller,
-                onLoadStop: (controller, url) =>
-                homeproviderTrue!.inAppWebViewController = controller,
-                onProgressChanged: (controller, progress) =>
-                    homeproviderFalse!.changeProgress(progress / 100),
-                onCloseWindow: (controller) => homeproviderTrue!.inAppWebViewController,
+                onWebViewCreated: (controller) {
+                  homeproviderTrue!.inAppWebViewController = controller;
+                },
+                onLoadError: (controller, url, code, message) {
+                  homeproviderTrue!.inAppWebViewController = controller;
+                  pullToRefreshController!.endRefreshing();
+                },
+                onLoadStart: (controller, url) {
+                  homeproviderTrue!.inAppWebViewController = controller;
+                  pullToRefreshController!.endRefreshing();
+                },
+                onLoadStop: (controller, url) {
+                  homeproviderTrue!.inAppWebViewController = controller;
+                  pullToRefreshController!.endRefreshing();
+                },
+                onProgressChanged:(controller, progress) {
+                  homeproviderFalse!.changeProgress(progress / 100);
+                  if(progress == 100)
+                    {
+                    pullToRefreshController!.endRefreshing();
+                    }
+                },
+                onCloseWindow: (controller) {
+                  homeproviderTrue!.inAppWebViewController;
+                  pullToRefreshController!.endRefreshing();
+                },
+
               ),
             ),
           ],
